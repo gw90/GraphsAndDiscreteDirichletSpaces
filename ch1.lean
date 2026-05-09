@@ -115,16 +115,43 @@ def Qfun (f g : X → ℝ) :=
   (1/2) * ∑ x ∈ G.vertices, ∑ y ∈ G.vertices, (G.b.toFun x y) * (f x - f y) * (g x - g y) +
     ∑ x ∈ G.vertices, (G.c.toFun x) * f x * g x
 
-instance Q' : IsBilinearMap G.Qfun (R := ℝ) where
-  add_left f g y := by
-    dsimp [Qfun]
-    sorry
-  smul_left := sorry
-  add_right := sorry
-  smul_right := sorry
+instance Q' : IsBilinearMap (R := ℝ) G.Qfun where
+  add_left f g h := by
+    unfold Qfun
+    apply sub_eq_zero.mp
+    simp [sub_add_eq_sub_sub]
+    ring_nf
+    simp [Finset.sum_add_distrib]
+    ring
+  smul_left c f g := by
+    unfold Qfun
+    field_simp
+    ring_nf
+    simp [Finset.sum_add_distrib]
+    ring_nf
+    simp [Finset.mul_sum (a := c)]
+    ring_nf
+  add_right f g h := by
+    unfold Qfun
+    apply sub_eq_zero.mp
+    simp [sub_add_eq_sub_sub]
+    ring_nf
+    simp [Finset.sum_add_distrib]
+    ring
+  smul_right c f g := by
+    unfold Qfun
+    ring_nf
+    simp [Finset.sum_add_distrib]
+    ring_nf
+    simp [Finset.mul_sum (a := c)]
+    ring_nf
+    apply sub_eq_zero.mp
+    ring_nf
 
 noncomputable
 def Q := G.Q'.toLinearMap
+
+lemma Q_apply : G.Q f g = G.Qfun f g := by rfl
 
 #check G.Q
 
