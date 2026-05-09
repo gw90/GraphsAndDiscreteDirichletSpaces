@@ -7,8 +7,6 @@ import Mathlib.Topology.ContinuousMap.Defs
 import Mathlib.Topology.Order
 import Mathlib.LinearAlgebra.BilinearMap
 
-#check LinearMap.BilinForm.toMatrix' (R₁ := ℝ)
-
 open NNReal
 
 @[ext]
@@ -151,10 +149,20 @@ instance Q' : IsBilinearMap (R := ℝ) G.Qfun where
 noncomputable
 def Q := G.Q'.toLinearMap
 
-lemma Q_apply : G.Q f g = G.Qfun f g := by rfl
+open LinearMap
 
-#check G.Q
+lemma Q_apply {f g} : G.Q f g = G.Qfun f g := by rfl
 
+noncomputable
+instance : DecidableEq X := Classical.typeDecidableEq X
 
+--instance : Fintype X := G.finiteVertices
+variable [Fintype X] -- I should be able to eliminate this though, shouldn't I?
+
+noncomputable
+def matrixAssociatedTo (Q : LinearMap.BilinForm ℝ (X → ℝ)) :=
+  BilinForm.toMatrix' (n := X) (R₁ := ℝ) Q
+
+#check matrixAssociatedTo G.Q
 
 end finiteGraphOver
