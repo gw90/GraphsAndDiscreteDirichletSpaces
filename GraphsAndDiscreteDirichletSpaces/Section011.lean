@@ -29,7 +29,6 @@ structure finiteGraphOver X where
   no_loop : ∀ ⦃x : X⦄, b x x = 0
   c : X → ℝ≥0
 
-
 set_option linter.unusedFintypeInType false
 namespace finiteGraphOver
 
@@ -103,103 +102,5 @@ lemma degreeWithStandardWeights (h : StandardWeights G) (x : X) :
 lemma degreeWithStandardWeightsCard (h : StandardWeights G) (x : X) :
     G.degree x = Finset.card {y | G.neighbors x y} := by
   simp [degreeWithStandardWeights G h x]
-
--- Section 0.1.2
---variable [TopologicalSpace X] [DiscreteTopology X]
---variable {F : Type*} [ContinuousMapClass F X ℝ] (f : F)
--- Don't deal with topologies, just consider all functions
-
-noncomputable
-instance : DecidableEq X := Classical.typeDecidableEq X
-
--- Operators
-noncomputable
-def stdBasis := (Pi.basisFun (η := X) (R := ℝ))
-
-noncomputable
-def matrixAssociatedToOp (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) :=
-  LinearMap.toMatrix stdBasis stdBasis L
-
-noncomputable
-def opInducedByMatrix (M : Matrix X X ℝ) :=
-  (LinearMap.toMatrix stdBasis stdBasis).symm M
-
-scoped notation "𝟙_" y:max => Pi.single y 1
-
-lemma opMatrixEntryVal (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (x y : X) :
-    (matrixAssociatedToOp L) x y = L (𝟙_y) x := by
-  simp [matrixAssociatedToOp, stdBasis, LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_apply]
-
-lemma opDef (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (f : X → ℝ) :
-  (L f) x = ∑ y, (matrixAssociatedToOp L) x y * f y := by
-  unfold matrixAssociatedToOp
-  have : f = stdBasis.equivFun.symm f := by rfl
-  nth_rw 1 [this, Module.Basis.equivFun_symm_apply stdBasis f]
-  simp only [map_sum, map_smul, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-  congr
-  ext y
-  rw [mul_comm]
-  congr
-
-def IsSymmOp (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) := (matrixAssociatedToOp L).IsSymm
-
--- remember to really prove every little statement
-
--- Forms
-
-noncomputable
-def associatedFormFun (f g : X → ℝ) :=
-  (1/2) * ∑ x, ∑ y, (G.b x y) * (f x - f y) * (g x - g y) +
-    ∑ x, (G.c x) * f x * g x
-
-instance associatedFormBilinearMap : IsBilinearMap (R := ℝ) G.associatedFormFun where
-  add_left f g h := by
-    unfold associatedFormFun
-    apply sub_eq_zero.mp
-    simp [sub_add_eq_sub_sub]
-    ring_nf
-    simp [Finset.sum_add_distrib]
-    ring
-  smul_left c f g := by
-    unfold associatedFormFun
-    field_simp
-    ring_nf
-    simp [Finset.sum_add_distrib]
-    ring_nf
-    simp [Finset.mul_sum]
-    ring_nf
-  add_right f g h := by
-    unfold associatedFormFun
-    apply sub_eq_zero.mp
-    simp [sub_add_eq_sub_sub]
-    ring_nf
-    simp [Finset.sum_add_distrib]
-    ring
-  smul_right c f g := by
-    unfold associatedFormFun
-    ring_nf
-    simp [Finset.sum_add_distrib]
-    ring_nf
-    simp [Finset.mul_sum]
-    ring_nf
-    apply sub_eq_zero.mp
-    ring_nf
-
-noncomputable
-def associatedForm := G.associatedFormBilinearMap.toLinearMap
-
-open LinearMap
-
-lemma associatedForm_apply {f g} : G.associatedForm f g = G.associatedFormFun f g := by rfl
-
-noncomputable
-def matrixAssociatedToForm (Q : LinearMap.BilinForm ℝ (X → ℝ)) :=
-  BilinForm.toMatrix' (n := X) (R₁ := ℝ) Q
-
--- def formInducedByMatrix (M : Matrix X X ℝ) -- may not need to define this
-
-#check matrixAssociatedToForm G.associatedForm
-
--- resume at p. 10
 
 end finiteGraphOver
