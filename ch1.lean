@@ -117,32 +117,41 @@ instance : DecidableEq X := Classical.typeDecidableEq X
 
 -- Operators
 noncomputable
+def stdBasis := (Pi.basisFun (η := X) (R := ℝ))
+
+noncomputable
 def matrixAssociatedToOp (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) :=
-  LinearMap.toMatrix (Pi.basisFun (η := X) (R := ℝ)) (Pi.basisFun (η := X) (R := ℝ)) L
+  LinearMap.toMatrix stdBasis stdBasis L
 
 noncomputable
 def opInducedByMatrix (M : Matrix X X ℝ) :=
-  (LinearMap.toMatrix (Pi.basisFun (η := X) (R := ℝ)) (Pi.basisFun (η := X) (R := ℝ))).symm M
-
-#check Pi.single x (x := 1)
+  (LinearMap.toMatrix stdBasis stdBasis).symm M
 
 lemma opMatrixEntryVal (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (x y : X) :
     (matrixAssociatedToOp L) x y = L (Pi.single y 1) x := by
-  simp [matrixAssociatedToOp, LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_apply]
+  simp [matrixAssociatedToOp, stdBasis, LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_apply]
 
 lemma opDef (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (f : X → ℝ) :
   (L f) x = ∑ (y : X), (matrixAssociatedToOp L) x y * f y := by
   unfold matrixAssociatedToOp
-  simp only [LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_apply, ← Pi.basisFun_apply]
-  -- this should be provable fairly trivially. Just search for the right lemma
-  sorry
+  have : f = stdBasis.equivFun.symm f := by rfl
+  nth_rw 1 [this, Module.Basis.equivFun_symm_apply stdBasis f]
+  simp only [map_sum, map_smul, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+  congr
+  ext y
+  rw [mul_comm]
+  congr
+
+def IsSymmOp (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) := (matrixAssociatedToOp L).IsSymm
+
+-- remember to really prove every little statement
 
 -- Forms
 
 noncomputable
 def Qfun (f g : X → ℝ) :=
-  (1/2) * ∑ x ∈ G.vertices, ∑ y ∈ G.vertices, (G.b.toFun x y) * (f x - f y) * (g x - g y) +
-    ∑ x ∈ G.vertices, (G.c.toFun x) * f x * g x
+  (1/2) * ∑ x : X, ∑ y : X, (G.b.toFun x y) * (f x - f y) * (g x - g y) +
+    ∑ x : X, (G.c.toFun x) * f x * g x
 
 instance Q' : IsBilinearMap (R := ℝ) G.Qfun where
   add_left f g h := by
@@ -177,6 +186,7 @@ instance Q' : IsBilinearMap (R := ℝ) G.Qfun where
     apply sub_eq_zero.mp
     ring_nf
 
+-- rename to form associated to graph G
 noncomputable
 def Q := G.Q'.toLinearMap
 
@@ -188,6 +198,10 @@ noncomputable
 def matrixAssociatedToForm (Q : LinearMap.BilinForm ℝ (X → ℝ)) :=
   BilinForm.toMatrix' (n := X) (R₁ := ℝ) Q
 
+-- def formInducedByMatrix (M : Matrix X X ℝ) -- may not need to define this
+
 #check matrixAssociatedToForm G.Q
+
+-- resume at p. 10
 
 end finiteGraphOver
