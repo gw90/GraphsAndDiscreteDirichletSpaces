@@ -6,6 +6,7 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Defs
 import Mathlib.Topology.ContinuousMap.Defs
 import Mathlib.Topology.Order
 import Mathlib.LinearAlgebra.BilinearMap
+import Mathlib.Combinatorics.SimpleGraph.LapMatrix
 
 open NNReal
 
@@ -108,6 +109,36 @@ lemma degreeWithStandardWeightsCard (h : StandardWeights G) (x : X) :
 --variable {F : Type*} [ContinuousMapClass F X ℝ] (f : F)
 -- Don't deal with topologies, just consider all functions
 
+--instance : Fintype X := G.finiteVertices
+variable [Fintype X] -- I should be able to eliminate this though, shouldn't I?
+
+noncomputable
+instance : DecidableEq X := Classical.typeDecidableEq X
+
+-- Operators
+noncomputable
+def matrixAssociatedToOp (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) :=
+  LinearMap.toMatrix (Pi.basisFun (η := X) (R := ℝ)) (Pi.basisFun (η := X) (R := ℝ)) L
+
+noncomputable
+def opInducedByMatrix (M : Matrix X X ℝ) :=
+  (LinearMap.toMatrix (Pi.basisFun (η := X) (R := ℝ)) (Pi.basisFun (η := X) (R := ℝ))).symm M
+
+#check Pi.single x (x := 1)
+
+lemma opMatrixEntryVal (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (x y : X) :
+    (matrixAssociatedToOp L) x y = L (Pi.single y 1) x := by
+  simp [matrixAssociatedToOp, LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_apply]
+
+lemma opDef (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (f : X → ℝ) :
+  (L f) x = ∑ (y : X), (matrixAssociatedToOp L) x y * f y := by
+  unfold matrixAssociatedToOp
+  simp only [LinearMap.toMatrix_eq_toMatrix', LinearMap.toMatrix'_apply, ← Pi.basisFun_apply]
+  -- this should be provable fairly trivially. Just search for the right lemma
+  sorry
+
+-- Forms
+
 noncomputable
 def Qfun (f g : X → ℝ) :=
   (1/2) * ∑ x ∈ G.vertices, ∑ y ∈ G.vertices, (G.b.toFun x y) * (f x - f y) * (g x - g y) +
@@ -127,7 +158,7 @@ instance Q' : IsBilinearMap (R := ℝ) G.Qfun where
     ring_nf
     simp [Finset.sum_add_distrib]
     ring_nf
-    simp [Finset.mul_sum (a := c)]
+    simp [Finset.mul_sum]
     ring_nf
   add_right f g h := by
     unfold Qfun
@@ -141,7 +172,7 @@ instance Q' : IsBilinearMap (R := ℝ) G.Qfun where
     ring_nf
     simp [Finset.sum_add_distrib]
     ring_nf
-    simp [Finset.mul_sum (a := c)]
+    simp [Finset.mul_sum]
     ring_nf
     apply sub_eq_zero.mp
     ring_nf
@@ -154,15 +185,9 @@ open LinearMap
 lemma Q_apply {f g} : G.Q f g = G.Qfun f g := by rfl
 
 noncomputable
-instance : DecidableEq X := Classical.typeDecidableEq X
-
---instance : Fintype X := G.finiteVertices
-variable [Fintype X] -- I should be able to eliminate this though, shouldn't I?
-
-noncomputable
-def matrixAssociatedTo (Q : LinearMap.BilinForm ℝ (X → ℝ)) :=
+def matrixAssociatedToForm (Q : LinearMap.BilinForm ℝ (X → ℝ)) :=
   BilinForm.toMatrix' (n := X) (R₁ := ℝ) Q
 
-#check matrixAssociatedTo G.Q
+#check matrixAssociatedToForm G.Q
 
 end finiteGraphOver
