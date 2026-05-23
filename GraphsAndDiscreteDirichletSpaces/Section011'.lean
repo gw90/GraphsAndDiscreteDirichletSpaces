@@ -6,7 +6,7 @@ open NNReal
 @[ext]
 structure GraphOver (X : Type*) extends SimpleGraph X where
   edgeWeight : X → X → ℝ≥0
-  edgeDef (u v : X) : Adj u v ↔ edgeWeight u v > 0
+  edgeDef (u v : X) : Adj u v ↔ 0 < edgeWeight u v
   killingTerm : X → ℝ≥0
 
 set_option linter.unusedFintypeInType false
@@ -44,12 +44,39 @@ variable [DecidableRel G.Adj]
 noncomputable
 instance : Fintype ↑(G.neighborSet x) := by exact Fintype.ofFinite ↑(G.neighborSet x)
 
+set_option linter.unusedDecidableInType false
 -- Example 0.4 (Combinatorial Degree)
 lemma degreeWithStandardWeights (h : StandardWeights G) (x : X) :
     G.deg x = G.degree x := by
-  rw [← G.card_neighborFinset_eq_degree]
-  
-  sorry
+  rw [← G.card_neighborFinset_eq_degree, G.neighborFinset_def]
+  unfold SimpleGraph.neighborSet
+  unfold deg
+  rw [h.killingTerm_zero, add_zero]
+  rw [Finset.cast_card]
+  rw [← Finset.sum_filter_ne_zero]
+  have (y : X) : G.edgeWeight x y ≠ 0 → G.edgeWeight x y = 1 := by
+    have := h.edgeWeight_binary' x y
+    intro h
+    cases this with
+    | inl h1 => simp_all
+    | inr h2 => exact h2
+  have : ∑ x_1 with G.edgeWeight x x_1 ≠ 0, G.edgeWeight x x_1 =
+      ∑ x_1 with G.edgeWeight x x_1 ≠ 0, 1 := by
+    congr!
+    simp_all
+  rw [this]
+  congr
+  ext a
+  constructor
+  · intro h
+    simp only [ne_eq, Finset.mem_filter, Finset.mem_univ, true_and] at h
+    have : 0 < G.edgeWeight x a := by exact pos_of_ne_zero h
+    simp only [Set.toFinset_setOf, Finset.mem_filter, Finset.mem_univ, true_and]
+    exact (G.edgeDef x a).mpr this
+  simp only [Set.toFinset_setOf, Finset.mem_filter, Finset.mem_univ, true_and, ne_eq]
+  intro h
+  suffices G.edgeWeight x a > 0 by exact pos_iff_ne_zero.mp this
+  exact (G.edgeDef x a).mp h
 
 lemma degreeWithStandardWeightsCard (h : StandardWeights G) (x : X) :
     G.deg x = (G.neighborFinset x).card := by
