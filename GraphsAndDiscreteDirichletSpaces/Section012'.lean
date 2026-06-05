@@ -302,8 +302,22 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   simp only [associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add, NNReal.coe_sum]
   field_simp
   -- work out on paper
+  sorry
 
+-- And
+example (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
+  simp only [associatedForm_apply, associatedFormFun, one_div]
 
   sorry
+
+-- Furthermore
+example : G.Q_bc (𝟙_x) 1 = G.c x := by
+
+  sorry
+
+-- Clearly
+example : G.Q_bc.IsSymm := sorry
+
+-- Do proofs above. Then define a predicate for Dirichlet form.
 
 end GraphOver
