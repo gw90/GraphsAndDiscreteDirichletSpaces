@@ -320,7 +320,15 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
     _ = G.c x * (𝟙_x : X → ℝ) x ^ 2 := sum_singleton (fun x_1 ↦ ↑(G.c x_1 : ℝ) * (𝟙_x) x_1 ^ 2) x
 
   rw [eq1.symm.trans eq2]
-  
+  simp only [Pi.single_eq_same, one_pow, mul_one]
+  rw [mul_add]
+  congr
+  rw [mul_sum]
+  congr
+  ext y
+  have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_isSymm.symm_op]
+  rw [this]
+
 
   /-
   have (x_1 : X) : x_1 ≠ x → ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 = 0 := by simp_all

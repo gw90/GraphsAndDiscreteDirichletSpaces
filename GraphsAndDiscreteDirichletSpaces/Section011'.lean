@@ -6,6 +6,7 @@ open NNReal
 @[ext]
 structure GraphOver (X : Type*) extends SimpleGraph X where
   edgeWeight : X → X → ℝ≥0
+  edgeWeight_symm : IsSymmOp edgeWeight
   edgeDef (u v : X) : Adj u v ↔ 0 < edgeWeight u v
   killingTerm : X → ℝ≥0
 
