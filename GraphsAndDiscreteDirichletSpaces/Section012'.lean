@@ -193,19 +193,54 @@ example (h : l.IsSymm) :
   ext x
   rw [Matrix.IsSymm.apply h y x]
 
--- To-do: define notational operators in the triangle : bilinear form, operator, matrix
-
 example (h : l.IsSymm) :
     ∑ (y : X), ((L_Mat l) f) y * g y = ∑ (x : X), f x * (L_Mat l g) x:= by
   unfold L_Mat
   unfold opInducedByMatrix
   unfold stdBasis
   simp only [toMatrix_eq_toMatrix', toMatrix'_symm, Matrix.toLin'_apply]
-  -- use similar approach to above
-  sorry
+  have : f = stdBasis.equivFun.symm f := by rfl
+  rw [this, Module.Basis.equivFun_symm_apply stdBasis f]
+  have : g = stdBasis.equivFun.symm g := by rfl
+  rw [this, Module.Basis.equivFun_symm_apply stdBasis g]
+  unfold stdBasis
+  simp only [Pi.basisFun_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+  simp only [Matrix.mulVec_eq_sum, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Finset.op_sum,
+    MulOpposite.op_mul, Matrix.transpose_apply, MulOpposite.smul_eq_mul_unop, Finset.unop_sum,
+    MulOpposite.unop_mul, MulOpposite.unop_op]
+  simp only [Finset.mul_sum]
+  nth_rw 2 [Finset.sum_comm]
+  rw [Finset.sum_comm_cycle]
+  nth_rw 1 [Finset.sum_comm]
+  congr
+  ext a
+  congr
+  ext b
+  simp only [mul_comm, Finset.mul_sum]
+  congr
+  ext y
+  rw [Matrix.IsSymm.apply h b y]
+  ring_nf
 
 -- end 4-part eqn from p. 9
 
+noncomputable
+abbrev L_Bilin (Q : LinearMap.BilinForm ℝ (X → ℝ)) :=
+  (LinearMap.toMatrix stdBasis stdBasis).symm (Q.toMatrix' (n := X) (R₁ := ℝ))
+
+noncomputable
+abbrev Q_Op (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) := (L.toMatrix stdBasis stdBasis).toBilin'
+
+-- Notational conventions for inducing matrices, operators, and bilinear forms from one another
+#check l_Op
+#check l_Bilin
+#check L_Mat
+#check L_Bilin
+#check Q_Op
+#check Q_Mat
+
+-- Definiton 0.5
+@[simp]
 noncomputable
 def associatedFormFun (f g : X → ℝ) :=
   (1/2) * ∑ x, ∑ y, (G.b x y) * (f x - f y) * (g x - g y) +
@@ -249,8 +284,26 @@ instance associatedFormBilinearMap : IsBilinearMap (R := ℝ) G.associatedFormFu
 noncomputable
 def associatedForm := G.associatedFormBilinearMap.toLinearMap
 
+@[simp]
 lemma associatedForm_apply {f g} : G.associatedForm f g = G.associatedFormFun f g := by rfl
 
+-- form associated to graph G, aka "energy form"
+noncomputable
+abbrev Q_bc := G.associatedForm
+
+#check G.Q_bc
+
 -- resume at p. 10
+
+-- We note by direct calculation that
+example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
+  unfold Q_bc
+  unfold deg
+  simp only [associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add, NNReal.coe_sum]
+  field_simp
+  -- work out on paper
+
+
+  sorry
 
 end GraphOver
