@@ -37,7 +37,7 @@ def opInducedByMatrix (M : Matrix X X ℝ) :=
 
 -- Operator induced by Matrix M (or what should really be l)
 noncomputable
-abbrev L (M : Matrix X X ℝ) := opInducedByMatrix M
+abbrev L_Mat (M : Matrix X X ℝ) := opInducedByMatrix M
 
 -- A direct calculation gives that l (x, y) = L1y (x)
 lemma opMatrixEntryVal (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (x y : X) :
@@ -85,12 +85,10 @@ open LinearMap
 /-For the values of Q on the diagonal {( f , f ) | f ∈ C (X)} of C (X) × C (X) we will
 use the notation  Q( f ) = Q( f , f )-/
 
-variable (Q : LinearMap.BilinForm ℝ (X → ℝ))
-
 /-
 In particular, when Q is symmetric, we get  Q( f + g) = Q( f ) + 2Q( f , g) + Q(g).
 -/
-example {f g : X → ℝ} (h : Q.IsSymm) :
+example {f g : X → ℝ} (Q : LinearMap.BilinForm ℝ (X → ℝ)) (h : Q.IsSymm) :
     Q (f + g) (f + g) = Q f f + 2 * (Q f g) + Q g g := by
   simp_all [h.eq]
   ring
@@ -104,16 +102,16 @@ def formInducedByMatrix (M : Matrix X X ℝ) : (X → ℝ) →ₗ[ℝ] (X → �
 
 /-and l the matrix associated to Q-/
 noncomputable
-def matrixAssociatedToForm :=
+def matrixAssociatedToForm (Q : LinearMap.BilinForm ℝ (X → ℝ)) :=
   BilinForm.toMatrix' (n := X) (R₁ := ℝ) Q
 
 noncomputable
-abbrev l_Bilin := matrixAssociatedToForm Q
+abbrev l_Bilin (Q : LinearMap.BilinForm ℝ (X → ℝ)) := matrixAssociatedToForm Q
 
 /-
 We note that Q(1x, 1y) = l (x, y) for all x, y ∈ X
 -/
-example (x y : X) :
+example (Q : LinearMap.BilinForm ℝ (X → ℝ)) (x y : X) :
     Q (𝟙_x) (𝟙_y) = (l_Bilin Q) x y := by rfl
 
 /-
@@ -129,8 +127,10 @@ example (x : X) :
 /-
 In particular, Q is symmetric if and only if the associated matrix l is symmetric.
 -/
--- Note: this would be a good mathlib lemma
-example : Q.IsSymm ↔ (l_Bilin Q).IsSymm := by
+-- Upstreamed to Mathlib as
+--#check LinearMap.BilinForm.isSymm_toMatrix_iff_isSymm
+
+example (Q : LinearMap.BilinForm ℝ (X → ℝ)) : Q.IsSymm ↔ (l_Bilin Q).IsSymm := by
   rw [LinearMap.BilinForm.isSymm_iff, LinearMap.isSymm_def, Matrix.IsSymm.ext_iff]
   unfold l_Bilin
   unfold matrixAssociatedToForm
@@ -152,7 +152,59 @@ example : Q.IsSymm ↔ (l_Bilin Q).IsSymm := by
   simp only [h]
   ring_nf
 
--- put 4-part eqn from p. 9
+/-Equation on page 9-/
+-- To-do: upstream as much as possible
+variable (l : Matrix X X ℝ) (f g : X → ℝ)
+
+noncomputable
+abbrev Q_Mat := formInducedByMatrix l
+
+example : (Q_Mat l) f g = ∑ (x : X), ∑ (y : X), (l x y) * f x * g y := by
+  simp only [formInducedByMatrix, Matrix.toBilin'_apply]
+  grind
+
+open scoped Matrix
+
+example (h : l.IsSymm) :
+    ∑ (x : X), ∑ (y : X), (l x y) * f x * g y
+    = ∑ (y : X), ((L_Mat l) f) y * g y := by
+  unfold L_Mat
+  unfold opInducedByMatrix
+  simp only [toMatrix_symm]
+  unfold stdBasis
+  simp only [Matrix.toLin_apply, Pi.basisFun_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
+  have : f = stdBasis.equivFun.symm f := by rfl
+  rw [this, Module.Basis.equivFun_symm_apply stdBasis f]
+  simp only [stdBasis, Pi.basisFun_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, map_sum,
+    map_smul, Finsupp.coe_finset_sum, Finsupp.coe_smul]
+  have (x : X) : (((Pi.basisFun ℝ X).repr (𝟙_x)) : X → ℝ) = 𝟙_x := by
+    simp_all only [Module.Basis.equivFun_symm_apply]
+    rfl
+  simp only [this]
+  rw [Finset.sum_comm]
+  congr
+  ext y
+  simp only [Pi.single_apply, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ,
+    ↓reduceIte, Matrix.mulVec_eq_sum, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, op_smul_eq_smul,
+    Matrix.transpose_apply]
+  simp only [mul_comm]
+  rw [← Finset.mul_sum]
+  congr
+  ext x
+  rw [Matrix.IsSymm.apply h y x]
+
+-- To-do: define notational operators in the triangle : bilinear form, operator, matrix
+
+example (h : l.IsSymm) :
+    ∑ (y : X), ((L_Mat l) f) y * g y = ∑ (x : X), f x * (L_Mat l g) x:= by
+  unfold L_Mat
+  unfold opInducedByMatrix
+  unfold stdBasis
+  simp only [toMatrix_eq_toMatrix', toMatrix'_symm, Matrix.toLin'_apply]
+  -- use similar approach to above
+  sorry
+
+-- end 4-part eqn from p. 9
 
 noncomputable
 def associatedFormFun (f g : X → ℝ) :=
