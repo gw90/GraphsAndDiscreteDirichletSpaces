@@ -301,17 +301,73 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   unfold deg
   simp only [associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add, NNReal.coe_sum]
   field_simp
-  -- work out on paper
+  --have : (∀ (i : X), (G.c i : ℝ) * (𝟙_x : X → ℝ) i ^ 2 ≠ 0 → i ∈ {y | y = x}) := sorry
+  have eq1 : ∑ i with i = x, G.c i * (𝟙_x : X → ℝ) i ^ 2 = ∑ i, ↑(G.c i) * (𝟙_x : X → ℝ) i ^ 2 := by
+    refine Fintype.sum_subset (f := fun (y : X) ↦ G.c y * (𝟙_x : X → ℝ) y ^ 2)
+      (s := {y : X | y = x}) ?_
+    intro y h
+    simp only [ne_eq, mul_eq_zero, NNReal.coe_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
+      pow_eq_zero_iff, not_or] at h
+    simp only [mem_filter, mem_univ, true_and]
+    have ⟨h1, h2⟩ := h
+    grind
+  have eq2 : ∑ i with i = x, G.c i * (𝟙_x : X → ℝ) i ^ 2 = G.c x * (𝟙_x : X → ℝ) x ^ 2 := calc
+    ∑ i with i = x, G.c i * (𝟙_x : X → ℝ) i ^ 2
+      = ∑ i ∈ {i | i = x}, G.c i * (𝟙_x : X → ℝ) i ^ 2 := rfl
+    _ = ∑ i ∈ {x}, G.c i * (𝟙_x : X → ℝ) i ^ 2 := by
+      congr
+      grind [Set.set_compr_eq_eq_singleton (a := x)]
+    _ = G.c x * (𝟙_x : X → ℝ) x ^ 2 := sum_singleton (fun x_1 ↦ ↑(G.c x_1 : ℝ) * (𝟙_x) x_1 ^ 2) x
+
+  rw [eq1.symm.trans eq2]
+  
+
+  /-
+  have (x_1 : X) : x_1 ≠ x → ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 = 0 := by simp_all
+  have : ∑ x_1, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 =
+    ∑ x_1 with ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 ≠ 0, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 := by
+      exact Eq.symm (sum_filter_ne_zero univ)
+  have : ∑ x_1, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 = 0 := by
+
+    sorry
+
+  -- work out on paper!!!!!!!!!!
   -- use a symmetry argument and factor out a lemma for later use?
   have eq1 (y z : X) : (y = x ∨ z = x) ∧ y ≠ z ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 1 := by
     grind
-  have non0 (y z : X) : (y = x ∨ z = x) ∧ y ≠ z →
-    (G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = (G.b y z) := by
-    intro h
-    grind [(eq1 y z).mp h]
   have eq0 (y z : X) : y = z ∨ (y ≠ x ∧ z ≠ x) ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 0 := by
     grind
-  
+  have eq0' (y z : X) : ¬ (y = z ∨ (y ≠ x ∧ z ≠ x)) ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 ≠ 0 := by
+    grind
+  have imp0 (y z : X) : y = z ∨ (y ≠ x ∧ z ≠ x) →
+      (G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 0 := by
+    grind
+  have contra0 (y z : X) :
+    (G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 ≠ 0 →
+    ¬ (y = z ∨ (y ≠ x ∧ z ≠ x)) := by grind
+
+  rw [← Finset.sum_filter_ne_zero]
+  have (y : X) :
+    ∑ z, ↑(G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x: X → ℝ) z) ^ 2 =
+      ↑(G.b y x) * ((𝟙_x : X → ℝ) y - (𝟙_x: X → ℝ) x) ^ 2 := by
+    by_cases h : y = x
+    · sorry
+    simp_all only [ne_eq, sq_eq_one_iff, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff,
+      implies_true, zero_pow, mul_zero, mul_eq_zero, NNReal.coe_eq_zero, not_or, Pi.single_eq_of_ne,
+      zero_sub, even_two, Even.neg_pow, Pi.single_eq_same, one_pow, mul_one]
+    rw [← Finset.sum_filter_ne_zero]
+    simp only [ne_eq, mul_eq_zero, NNReal.coe_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
+      pow_eq_zero_iff, not_or]
+    have (x_1 : X) : (𝟙_x : X → ℝ) x_1 ≠ 0 ↔ x_1 = x := by grind
+    simp [this]
+
+
+    sorry
+
+
+
+
+  -/
 
   sorry
 
