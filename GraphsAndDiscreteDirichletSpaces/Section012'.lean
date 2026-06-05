@@ -302,6 +302,17 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   simp only [associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add, NNReal.coe_sum]
   field_simp
   -- work out on paper
+  -- use a symmetry argument and factor out a lemma for later use?
+  have eq1 (y z : X) : (y = x ∨ z = x) ∧ y ≠ z ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 1 := by
+    grind
+  have non0 (y z : X) : (y = x ∨ z = x) ∧ y ≠ z →
+    (G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = (G.b y z) := by
+    intro h
+    grind [(eq1 y z).mp h]
+  have eq0 (y z : X) : y = z ∨ (y ≠ x ∧ z ≠ x) ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 0 := by
+    grind
+  
+
   sorry
 
 -- And
