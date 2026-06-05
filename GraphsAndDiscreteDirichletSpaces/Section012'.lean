@@ -295,6 +295,9 @@ abbrev Q_bc := G.associatedForm
 
 -- resume at p. 10
 
+@[simp]
+lemma no_loop (x : X) : G.b x x = 0 := by linarith [not_imp_not.mpr (G.edgeDef x x).mpr (G.irrefl (v := x))]
+
 -- We note by direct calculation that
 example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   unfold Q_bc
@@ -326,7 +329,30 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   -- work from here?
   change ∑ (y : X), ∑ (z : X), ↑(G.b y z : ℝ) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2
     = 2 * ∑ i, ↑(G.b x i : ℝ)
-  rw [mul_sum]
+  --rw [mul_sum]
+
+  rw [Finset.sum_eq_sum_diff_singleton_add (i := x)]
+  swap
+  · simp
+  simp only [Pi.single_eq_same]
+  have : ∑ x_1, ↑((G.b x x_1) : ℝ) * (1 - (𝟙_x : X → ℝ) x_1) ^ 2 = ∑ x_1, ↑(G.b x x_1 : ℝ) := by
+    nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := x)]
+    swap
+    · simp
+    rw [Finset.sum_eq_sum_diff_singleton_add (i := x)]
+    swap
+    · simp
+    congr
+    · ext y
+      by_cases h : y = x
+      · simp_all
+      simp_all
+    simp_all
+  rw [this]
+  rw [two_mul]
+  congr 1
+  -- almost there!
+  /-
   congr
   ext y
   have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op]
@@ -334,16 +360,20 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   -- find a lemma to break this up into 2 summations
   -- maybe sum over the singleton x and the rest of the set
   -- then when they add back together, it should all work
+  #check Finset.sum_erase_add
+  #check Finset.add_sum_erase
+  #check Finset.sum_eq_sum_diff_singleton_add (i := x) -- this one
   #check finsum_mem_add_diff
   #check Finset.sum_biUnion
   #check finsum_mem_inter_add_diff
+
   by_cases h : y = x
   · -- should imply z ≠ x
     sorry
   -- should imply z=x
   -- Now for the final part. Maybe copy approach from above?
   #check Fintype.sum_subset (f := fun (z : X) ↦ ↑(G.b y z) * ((𝟙_x) y - (𝟙_x) z) ^ 2) (s := {i : X | i ≠ y})
-
+  -/
   /-
   have (x_1 : X) : x_1 ≠ x → ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 = 0 := by simp_all
   have : ∑ x_1, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 =
