@@ -351,7 +351,22 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   rw [this]
   rw [two_mul]
   congr 1
-  -- almost there!
+  have : ∑ x_1 ∈ univ \ {x}, ∑ z, ↑(G.b x_1 z) * ((𝟙_x : X → ℝ) x_1 - (𝟙_x : X → ℝ) z) ^ 2
+     = ∑ x_1 ∈ {y | y ≠ x}, ∑ z, ↑(G.b x_1 z) * ((𝟙_x : X → ℝ) x_1 - (𝟙_x : X → ℝ) z) ^ 2 := by
+      congr; grind
+  --rw [this]
+  nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := x)]
+  swap
+  · simp
+  simp only [no_loop, coe_zero, add_zero]
+  congr! with y h
+  have : y ≠ x := by simp_all
+  simp only [ne_eq, this, not_false_eq_true, Pi.single_eq_of_ne, zero_sub, even_two, Even.neg_pow]
+
+
+
+
+
   /-
   congr
   ext y
