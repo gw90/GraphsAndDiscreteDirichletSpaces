@@ -323,12 +323,26 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   simp only [Pi.single_eq_same, one_pow, mul_one]
   rw [mul_add]
   congr
+  -- work from here?
+  change ∑ (y : X), ∑ (z : X), ↑(G.b y z : ℝ) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2
+    = 2 * ∑ i, ↑(G.b x i : ℝ)
   rw [mul_sum]
   congr
   ext y
-  have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_isSymm.symm_op]
+  have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op]
   rw [this]
-
+  -- find a lemma to break this up into 2 summations
+  -- maybe sum over the singleton x and the rest of the set
+  -- then when they add back together, it should all work
+  #check finsum_mem_add_diff
+  #check Finset.sum_biUnion
+  #check finsum_mem_inter_add_diff
+  by_cases h : y = x
+  · -- should imply z ≠ x
+    sorry
+  -- should imply z=x
+  -- Now for the final part. Maybe copy approach from above?
+  #check Fintype.sum_subset (f := fun (z : X) ↦ ↑(G.b y z) * ((𝟙_x) y - (𝟙_x) z) ^ 2) (s := {i : X | i ≠ y})
 
   /-
   have (x_1 : X) : x_1 ≠ x → ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 = 0 := by simp_all
