@@ -298,12 +298,11 @@ abbrev Q_bc := G.associatedForm
 @[simp]
 lemma no_loop (x : X) : G.b x x = 0 := by linarith [not_imp_not.mpr (G.edgeDef x x).mpr (G.irrefl (v := x))]
 
--- We note by direct calculation that
-example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
-  unfold Q_bc
-  unfold deg
-  simp only [associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add, NNReal.coe_sum]
-  field_simp
+lemma b_symm (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op]
+
+@[simp]
+lemma sum_killingTerm_weight_sq_eq_support_weighted :
+    ∑ i, ↑(G.c i) * (𝟙_x : X → ℝ) i ^ 2 = ↑(G.c x) * (𝟙_x : X → ℝ) x ^ 2 := by
   have eq1 : ∑ i with i = x, G.c i * (𝟙_x : X → ℝ) i ^ 2 = ∑ i, ↑(G.c i) * (𝟙_x : X → ℝ) i ^ 2 := by
     refine Fintype.sum_subset (f := fun (y : X) ↦ G.c y * (𝟙_x : X → ℝ) y ^ 2)
       (s := {y : X | y = x}) ?_
@@ -320,8 +319,33 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
       congr
       grind [Set.set_compr_eq_eq_singleton (a := x)]
     _ = G.c x * (𝟙_x : X → ℝ) x ^ 2 := sum_singleton (fun x_1 ↦ ↑(G.c x_1 : ℝ) * (𝟙_x) x_1 ^ 2) x
-  rw [eq1.symm.trans eq2]
-  simp only [Pi.single_eq_same, one_pow, mul_one]
+  exact eq1.symm.trans eq2
+-- maybe the lemma above and the lemma below can be refactored to share another lemma in common
+-- to shorten the proofs
+@[simp]
+lemma neq_basis_vecs_imp_sum_weighted_killingTerm_eq_zero (x y : X) (h : x ≠ y) :
+    ∑ z, ↑(G.c z) * (𝟙_x : X → ℝ) z * (𝟙_y : X → ℝ) z = 0 := by
+  rw [Finset.sum_eq_sum_diff_singleton_add (i := x)]; swap
+  · simp
+  simp only [Pi.single_eq_same, mul_one]
+  have : (𝟙_y : X → ℝ) x = 0 := by grind
+  rw [this, mul_zero, add_zero]
+  have : ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 * (𝟙_y : X → ℝ) x_1 = 0 := by
+    suffices ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 * (𝟙_y : X → ℝ) x_1 =
+        ∑ x_1 ∈ univ \ {x}, 0 by
+      simp only [Finset.sum_const_zero] at this
+      exact this
+    congr! with y h
+    grind
+  rw [this]
+
+-- We note by direct calculation that
+example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
+  unfold Q_bc
+  unfold deg
+  simp only [associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add, NNReal.coe_sum]
+  field_simp
+  simp only [sum_killingTerm_weight_sq_eq_support_weighted, Pi.single_eq_same, one_pow, mul_one]
   rw [mul_add]
   congr
   change ∑ (y : X), ∑ (z : X), ↑(G.b y z : ℝ) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2
@@ -359,8 +383,7 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   rw [Finset.sum_eq_sum_diff_singleton_add (i := x)]
   swap
   · simp
-  have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op] -- factor out
-  simp only [Pi.single_eq_same, one_pow, mul_one, this]
+  simp only [Pi.single_eq_same, one_pow, mul_one, G.b_symm]
   apply add_eq_right.mpr
   suffices ∑ x_1 ∈ univ \ {x}, ↑(G.b y x_1 : ℝ) * (𝟙_x) x_1 ^ 2 = ∑ x_1 ∈ univ \ {x}, 0 by
     simp only [Finset.sum_const_zero] at this
@@ -372,21 +395,7 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
 example (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
   simp only [associatedForm_apply, associatedFormFun, one_div]
   field_simp
-  nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := x)]
-  swap
-  · simp
-  simp only [Pi.single_eq_same, mul_one]
-  have : (𝟙_y : X → ℝ) x = 0 := by grind
-  rw [this, mul_zero, add_zero]
-  have : ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 * (𝟙_y : X → ℝ) x_1 = 0 := by
-    suffices ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 * (𝟙_y : X → ℝ) x_1 =
-        ∑ x_1 ∈ univ \ {x}, 0 by
-      simp only [Finset.sum_const_zero] at this
-      exact this
-    congr! with y h
-    grind
-  rw [this, mul_zero, add_zero] -- this is a good spot because simp makes no progress
-  -- and we eliminated the part the depended on G.c
+  rw [neq_basis_vecs_imp_sum_weighted_killingTerm_eq_zero (h := h), mul_zero, add_zero]
   nth_rw 1 [Finset.sum_eq_sum_diff_singleton_add (i := x)]
   swap
   · simp
@@ -437,14 +446,24 @@ example (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
     congr! with z h2
     grind
   rw [this]
-  have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op]
-  rw [this]
+  rw [G.b_symm]
   ring
 
 -- Furthermore
 example : G.Q_bc (𝟙_x) 1 = G.c x := by
-
-  sorry
+  unfold Q_bc
+  simp only [associatedForm_apply, associatedFormFun, one_div, Pi.one_apply, sub_self, mul_zero,
+    sum_const_zero, mul_one, zero_add]
+  rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (h := by grind)]
+  simp only [Pi.single_eq_same, mul_one]
+  have : ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 = 0 := by
+    suffices ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1
+           = ∑ x_1 ∈ (univ \ {x}), 0 by
+      simp only [Finset.sum_const_zero] at this
+      exact this
+    congr! with z h2
+    grind
+  simp [this]
 
 -- Clearly
 example : G.Q_bc.IsSymm := sorry
