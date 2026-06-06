@@ -466,7 +466,12 @@ example : G.Q_bc (𝟙_x) 1 = G.c x := by
   simp [this]
 
 -- Clearly
-example : G.Q_bc.IsSymm := sorry
+example : G.Q_bc.IsSymm := by
+  simp only [isSymm_def, associatedForm_apply, associatedFormFun, one_div, Real.ringHom_apply]
+  intro f g
+  congr 1; swap
+  · grind
+  grind
 
 -- Do proofs above. Then define a predicate for Dirichlet form.
 
