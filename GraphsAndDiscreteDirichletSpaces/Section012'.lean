@@ -304,7 +304,6 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   unfold deg
   simp only [associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add, NNReal.coe_sum]
   field_simp
-  --have : (∀ (i : X), (G.c i : ℝ) * (𝟙_x : X → ℝ) i ^ 2 ≠ 0 → i ∈ {y | y = x}) := sorry
   have eq1 : ∑ i with i = x, G.c i * (𝟙_x : X → ℝ) i ^ 2 = ∑ i, ↑(G.c i) * (𝟙_x : X → ℝ) i ^ 2 := by
     refine Fintype.sum_subset (f := fun (y : X) ↦ G.c y * (𝟙_x : X → ℝ) y ^ 2)
       (s := {y : X | y = x}) ?_
@@ -326,11 +325,8 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   simp only [Pi.single_eq_same, one_pow, mul_one]
   rw [mul_add]
   congr
-  -- work from here?
   change ∑ (y : X), ∑ (z : X), ↑(G.b y z : ℝ) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2
     = 2 * ∑ i, ↑(G.b x i : ℝ)
-  --rw [mul_sum]
-
   rw [Finset.sum_eq_sum_diff_singleton_add (i := x)]
   swap
   · simp
@@ -362,81 +358,17 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   congr! with y h
   have : y ≠ x := by simp_all
   simp only [ne_eq, this, not_false_eq_true, Pi.single_eq_of_ne, zero_sub, even_two, Even.neg_pow]
-
-
-
-
-
-  /-
-  congr
-  ext y
-  have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op]
-  rw [this]
-  -- find a lemma to break this up into 2 summations
-  -- maybe sum over the singleton x and the rest of the set
-  -- then when they add back together, it should all work
-  #check Finset.sum_erase_add
-  #check Finset.add_sum_erase
-  #check Finset.sum_eq_sum_diff_singleton_add (i := x) -- this one
-  #check finsum_mem_add_diff
-  #check Finset.sum_biUnion
-  #check finsum_mem_inter_add_diff
-
-  by_cases h : y = x
-  · -- should imply z ≠ x
-    sorry
-  -- should imply z=x
-  -- Now for the final part. Maybe copy approach from above?
-  #check Fintype.sum_subset (f := fun (z : X) ↦ ↑(G.b y z) * ((𝟙_x) y - (𝟙_x) z) ^ 2) (s := {i : X | i ≠ y})
-  -/
-  /-
-  have (x_1 : X) : x_1 ≠ x → ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 = 0 := by simp_all
-  have : ∑ x_1, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 =
-    ∑ x_1 with ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 ≠ 0, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 := by
-      exact Eq.symm (sum_filter_ne_zero univ)
-  have : ∑ x_1, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 ^ 2 = 0 := by
-
-    sorry
-
-  -- work out on paper!!!!!!!!!!
-  -- use a symmetry argument and factor out a lemma for later use?
-  have eq1 (y z : X) : (y = x ∨ z = x) ∧ y ≠ z ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 1 := by
-    grind
-  have eq0 (y z : X) : y = z ∨ (y ≠ x ∧ z ≠ x) ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 0 := by
-    grind
-  have eq0' (y z : X) : ¬ (y = z ∨ (y ≠ x ∧ z ≠ x)) ↔ ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 ≠ 0 := by
-    grind
-  have imp0 (y z : X) : y = z ∨ (y ≠ x ∧ z ≠ x) →
-      (G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 = 0 := by
-    grind
-  have contra0 (y z : X) :
-    (G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) z) ^ 2 ≠ 0 →
-    ¬ (y = z ∨ (y ≠ x ∧ z ≠ x)) := by grind
-
-  rw [← Finset.sum_filter_ne_zero]
-  have (y : X) :
-    ∑ z, ↑(G.b y z) * ((𝟙_x : X → ℝ) y - (𝟙_x: X → ℝ) z) ^ 2 =
-      ↑(G.b y x) * ((𝟙_x : X → ℝ) y - (𝟙_x: X → ℝ) x) ^ 2 := by
-    by_cases h : y = x
-    · sorry
-    simp_all only [ne_eq, sq_eq_one_iff, OfNat.ofNat_ne_zero, not_false_eq_true, pow_eq_zero_iff,
-      implies_true, zero_pow, mul_zero, mul_eq_zero, NNReal.coe_eq_zero, not_or, Pi.single_eq_of_ne,
-      zero_sub, even_two, Even.neg_pow, Pi.single_eq_same, one_pow, mul_one]
-    rw [← Finset.sum_filter_ne_zero]
-    simp only [ne_eq, mul_eq_zero, NNReal.coe_eq_zero, OfNat.ofNat_ne_zero, not_false_eq_true,
-      pow_eq_zero_iff, not_or]
-    have (x_1 : X) : (𝟙_x : X → ℝ) x_1 ≠ 0 ↔ x_1 = x := by grind
-    simp [this]
-
-
-    sorry
-
-
-
-
-  -/
-
-  sorry
+  rw [Finset.sum_eq_sum_diff_singleton_add (i := x)]
+  swap
+  · simp
+  have (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op] -- factor out
+  simp only [Pi.single_eq_same, one_pow, mul_one, this]
+  apply add_eq_right.mpr
+  suffices ∑ x_1 ∈ univ \ {x}, ↑(G.b y x_1 : ℝ) * (𝟙_x) x_1 ^ 2 = ∑ x_1 ∈ univ \ {x}, 0 by
+    simp only [Finset.sum_const_zero] at this
+    exact this
+  congr! with z h'
+  grind
 
 -- And
 example (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
