@@ -465,6 +465,7 @@ example : G.Q_bc (𝟙_x) 1 = G.c x := by
     grind
   simp [this]
 
+#check G.Q_bc
 -- Clearly
 example : G.Q_bc.IsSymm := by
   simp only [isSymm_def, associatedForm_apply, associatedFormFun, one_div, Real.ringHom_apply]
@@ -473,6 +474,45 @@ example : G.Q_bc.IsSymm := by
   · grind
   grind
 
--- Do proofs above. Then define a predicate for Dirichlet form.
+-- more conditions will be added later to get regular dirichlet forms
+
+-- Now we define a predicate for Dirichlet forms
+structure DirichletProp (Q : (X → ℝ) →ₗ[ℝ] (X → ℝ) →ₗ[ℝ] ℝ) : Prop where
+  protected eq : (∀ (f g : X → ℝ), (∀ (x y : X), |f x - f y| ≤ |g x - g y|)
+    → (∀ (x : X), (|f x| ≤ |g x|)) -- is this really what they meant?
+    → Q f f ≤ Q g g)
+
+#check DirichletProp G.Q_bc
+
+--maybe define this using derivatives or some sobolev/function properties
+-- is this like regularity or something?
+-- could find a way to express this with Lipschitz continuity, but it's probably not worth it
+
+theorem DirichletProp_def (Q : (X → ℝ) →ₗ[ℝ] (X → ℝ) →ₗ[ℝ] ℝ) : DirichletProp Q ↔
+  (∀ (f g : X → ℝ), (∀ (x y : X), |f x - f y| ≤ |g x - g y|) → (∀ (x : X), (|f x| ≤ |g x|)) → Q f f ≤ Q g g) := by
+  constructor
+  · exact fun a f g a_1 a_2 ↦ a.eq f g a_1 a_2
+  exact fun a ↦ { eq := a }
+
+example : DirichletProp G.Q_bc := by
+  simp only [DirichletProp_def]
+  intro f g h1 h2
+  unfold Q_bc
+  simp [associatedForm_apply, associatedFormFun]
+  field_simp
+  gcongr 1
+  · gcongr 3 with a ha b hb
+    rw [← sq_abs]
+    nth_rw 2 [← sq_abs]
+    gcongr 1
+    simp [h1]
+  gcongr 3 with x hx
+  rw [← sq_abs]
+  nth_rw 2 [← sq_abs]
+  gcongr 1
+  simp [h2] -- this is where I use the questionable norm thing
+
+
+-- We will have to prove that Q.bc is a dirichlet form
 
 end GraphOver
