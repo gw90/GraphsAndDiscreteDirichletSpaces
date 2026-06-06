@@ -512,7 +512,36 @@ example : DirichletProp G.Q_bc := by
   gcongr 1
   simp [h2] -- this is where I use the questionable norm thing
 
+structure DirichletForm (Q : (X → ℝ) →ₗ[ℝ] (X → ℝ) →ₗ[ℝ] ℝ) : Prop where
+  protected dirichletProp : DirichletProp Q
+  protected symm : Q.IsSymm
 
--- We will have to prove that Q.bc is a dirichlet form
+instance : DirichletForm G.Q_bc where -- the proofs below are copied from example above
+  dirichletProp := by
+    simp only [DirichletProp_def]
+    intro f g h1 h2
+    unfold Q_bc
+    simp [associatedForm_apply, associatedFormFun]
+    field_simp
+    gcongr 1
+    · gcongr 3 with a ha b hb
+      rw [← sq_abs]
+      nth_rw 2 [← sq_abs]
+      gcongr 1
+      simp [h1]
+    gcongr 3 with x hx
+    rw [← sq_abs]
+    nth_rw 2 [← sq_abs]
+    gcongr 1
+    simp [h2]
+  symm := by
+    simp only [isSymm_def, associatedForm_apply, associatedFormFun, one_div, Real.ringHom_apply]
+    intro f g
+    congr 1; swap
+    · grind
+    grind
+
+-- Definition 0.6 (Laplacian)
+
 
 end GraphOver
