@@ -294,6 +294,14 @@ abbrev Q_bc := G.associatedForm
 #check G.Q_bc
 
 -- resume at p. 10
+@[simp]
+lemma sum_with_cond_eq {M : Type*} [AddCommMonoid M] (X : Type*) [Fintype X] (a : X) (f : X → M) :
+    ∑ (x : X) with x = a, f x = f a := calc
+  ∑ x with x = a, f x
+  _ = ∑ x ∈ {a}, f x := by
+    congr
+    grind [Set.set_compr_eq_eq_singleton]
+  _ = f a := sum_singleton (f ·) a
 
 @[simp]
 lemma no_loop (x : X) : G.b x x = 0 := by linarith [not_imp_not.mpr (G.edgeDef x x).mpr (G.irrefl (v := x))]
@@ -312,14 +320,7 @@ lemma sum_killingTerm_weight_sq_eq_support_weighted :
     simp only [mem_filter, mem_univ, true_and]
     have ⟨h1, h2⟩ := h
     grind
-  have eq2 : ∑ i with i = x, G.c i * (𝟙_x : X → ℝ) i ^ 2 = G.c x * (𝟙_x : X → ℝ) x ^ 2 := calc
-    ∑ i with i = x, G.c i * (𝟙_x : X → ℝ) i ^ 2
-      = ∑ i ∈ {i | i = x}, G.c i * (𝟙_x : X → ℝ) i ^ 2 := rfl
-    _ = ∑ i ∈ {x}, G.c i * (𝟙_x : X → ℝ) i ^ 2 := by
-      congr
-      grind [Set.set_compr_eq_eq_singleton (a := x)]
-    _ = G.c x * (𝟙_x : X → ℝ) x ^ 2 := sum_singleton (fun x_1 ↦ ↑(G.c x_1 : ℝ) * (𝟙_x) x_1 ^ 2) x
-  exact eq1.symm.trans eq2
+  simp [eq1.symm]
 -- maybe the lemma above and the lemma below can be refactored to share another lemma in common
 -- to shorten the proofs
 @[simp]
@@ -542,6 +543,35 @@ instance : DirichletForm G.Q_bc where -- the proofs below are copied from exampl
     grind
 
 -- Definition 0.6 (Laplacian)
+def Laplacian (f : X → ℝ) : X → ℝ :=
+  fun x ↦ ∑ y, G.b x y * (f x - f y) + G.c x * f x
 
+lemma Laplacian_apply : G.Laplacian f x = ∑ y, G.b x y * (f x - f y) + G.c x * f x := by rfl
+
+#check G.Laplacian
+
+abbrev L_bc := G.Laplacian
+
+#check Finite.Set.finite_range f
+#check Finset.max
+#check Set.finite_range f
+#check Finset.image f
+#check Set.Finite.toFinset (Set.finite_range f)
+#check Set.Finite.toFinset_range f (Set.finite_range f)
+#check Finset.sup
+#check Finset.max' (Set.Finite.toFinset (Set.finite_range f))
+-- I'm dying here. I think I have to specify X nonempty and do a bunch of nonsense
+/-
+lemma Laplacian_max_principle
+  (max_nonneg : (0 : ℝ) ≤ Finset.max' (Set.Finite.toFinset (Set.finite_range f)))
+  (at_max : f x = Finset.max (Set.Finite.toFinset (Set.finite_range f))) :
+    0 ≤ G.L_bc f x := by
+  unfold L_bc
+  unfold Laplacian
+
+  have (y : X) : f y ≤ sSup (Set.range f) := by sorry
+  have (y : X) : 0 ≤ (sSup (Set.range f) - f y) := by sorry -- I should be able to exact? this
+  sorry
+-/
 
 end GraphOver
