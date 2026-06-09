@@ -53,12 +53,10 @@ L f (x) =  ∑︁  y ∈X  l(x, y) f (y)  for all f ∈ C (X) and x ∈ X.
 -/
 lemma opDef (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (f : X → ℝ) :
   (L f) x = ∑ y, (l_Op L) x y * f y := by
-  unfold l_Op
   have : f = stdBasis.equivFun.symm f := by rfl
   nth_rw 1 [this, Module.Basis.equivFun_symm_apply stdBasis f]
   simp only [map_sum, map_smul, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-  congr
-  ext y
+  congr with y
   rw [mul_comm]
   congr
 
@@ -144,8 +142,8 @@ example (Q : LinearMap.BilinForm ℝ (X → ℝ)) : Q.IsSymm ↔ (l_Bilin Q).IsS
   rw [this, Module.Basis.equivFun_symm_apply stdBasis f]
   have : g = stdBasis.equivFun.symm g := by rfl
   rw [this, Module.Basis.equivFun_symm_apply stdBasis g]
-  simp only [stdBasis, Pi.basisFun_apply, map_sum, map_smul, LinearMap.coe_sum, coe_smul, Finset.sum_apply,
-    Pi.smul_apply, smul_eq_mul, Finset.mul_sum]
+  simp only [stdBasis, Pi.basisFun_apply, map_sum, map_smul, LinearMap.coe_sum, coe_smul,
+    Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Finset.mul_sum]
   rw [Finset.sum_comm]
   ring_nf
   simp only [h]
@@ -446,26 +444,21 @@ lemma Laplacian_apply : G.Laplacian f x = ∑ y, G.b x y * (f x - f y) + G.c x *
 
 abbrev L_bc := G.Laplacian
 
-#check Finite.Set.finite_range f
-#check Finset.max
-#check Set.finite_range f
-#check Finset.image f
-#check Set.Finite.toFinset (Set.finite_range f)
-#check Set.Finite.toFinset_range f (Set.finite_range f)
-#check Finset.sup
-#check Finset.max' (Set.Finite.toFinset (Set.finite_range f))
--- I'm dying here. I think I have to specify X nonempty and do a bunch of nonsense
-/-
 lemma Laplacian_max_principle
-  (max_nonneg : (0 : ℝ) ≤ Finset.max' (Set.Finite.toFinset (Set.finite_range f)))
-  (at_max : f x = Finset.max (Set.Finite.toFinset (Set.finite_range f))) :
+  (x : X)
+  (max_nonneg : (0 : ℝ) ≤ f x)
+  (at_max : ∀ y : X, f y ≤ f x) :
     0 ≤ G.L_bc f x := by
   unfold L_bc
   unfold Laplacian
-
-  have (y : X) : f y ≤ sSup (Set.range f) := by sorry
-  have (y : X) : 0 ≤ (sSup (Set.range f) - f y) := by sorry -- I should be able to exact? this
-  sorry
--/
+  have h1 : ∀ y : X, 0 ≤ f x - f y := by grind
+  have h2 : ∀ y : X, 0 ≤ G.b x y := by simp
+  have h3 : 0 ≤ fun y ↦ ↑(G.b x y) * (f x - f y) := by
+    suffices ∀ y : X, 0 ≤ ↑(G.b x y) * (f x - f y) by aesop
+    intro y
+    nlinarith [h1 y, h2]
+  have h4 := Fintype.sum_nonneg (f := fun y ↦ ↑(G.b x y) * (f x - f y))
+  have := h4 h3
+  nlinarith
 
 end GraphOver
