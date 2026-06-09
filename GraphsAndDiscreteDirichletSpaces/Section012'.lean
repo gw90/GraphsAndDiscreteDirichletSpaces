@@ -474,16 +474,13 @@ def l_bc' : Matrix X X ℝ := l_Bilin G.Q_bc
 
 example : G.l_bc = G.l_bc' := by
   ext x y
-  unfold l_bc'
-  unfold l_Bilin
-  unfold matrixAssociatedToForm
+  dsimp [l_bc', l_Bilin, matrixAssociatedToForm]
   rw [BilinForm.toMatrix'_apply]
   by_cases h : x ≠ y
   · simp [G.x_neq_y_imp_Q_bc_eq_neg_b x y h, l_bc, h]
   push Not at h
   rw [h]
-  unfold l_bc
-  simp only [↓reduceIte]
+  simp only [l_bc, ↓reduceIte]
   rw [Q_bc_x_x_eq_deg]
   rfl
 
