@@ -21,7 +21,10 @@ which take the value 1 at x and are 0 otherwise.-/
 noncomputable
 def stdBasis := (Pi.basisFun (η := X) (R := ℝ))
 
-scoped notation "𝟙_" y:max => Pi.single y 1
+noncomputable
+abbrev basisFunc (y : X) : X → ℝ := Pi.single y 1
+
+scoped notation "𝟙_" y:max => basisFunc y
 
 noncomputable
 def matrixAssociatedToOp (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) :=
@@ -272,22 +275,25 @@ lemma associatedForm_apply {f g} : G.associatedForm f g = G.associatedFormFun f 
 noncomputable
 abbrev Q_bc := G.associatedForm
 
+omit [Fintype X] in
 @[simp]
-lemma no_loop (x : X) : G.b x x = 0 := by linarith [not_imp_not.mpr (G.edgeDef x x).mpr (G.irrefl (v := x))]
+lemma no_loop (x : X) : G.b x x = 0 := by
+  linarith [not_imp_not.mpr (G.edgeDef x x).mpr (G.irrefl (v := x))]
 
-lemma b_symm (y z : X) : G.b y z = G.b z y := by simp [G.edgeWeight_symm.symm_op]
+omit [Fintype X] in
+lemma b_symm (y z : X) : G.b y z = G.b z y := by
+  simp [G.edgeWeight_symm.symm_op]
 
 @[simp]
 lemma sum_killingTerm_weight_sq_eq_support_weighted :
-    ∑ i, ↑(G.c i) * (𝟙_x : X → ℝ) i ^ 2 = ↑(G.c x) * (𝟙_x : X → ℝ) x ^ 2 := by
-  simp [(Fintype.sum_subset (f := fun (y : X) ↦ G.c y * (𝟙_x : X → ℝ) y ^ 2)
+    ∑ i, ↑(G.c i) * (𝟙_x) i ^ 2 = ↑(G.c x) * (𝟙_x) x ^ 2 := by
+  simp [(Fintype.sum_subset (f := fun (y : X) ↦ G.c y * (𝟙_x) y ^ 2)
       (s := {x}) (by grind)).symm]
--- maybe the lemma above and the lemma below can be refactored to share another lemma in common
--- to shorten the proofs
+
 @[simp]
 lemma neq_basis_vecs_imp_sum_weighted_killingTerm_eq_zero (x y : X) (h : x ≠ y) :
-    ∑ z, ↑(G.c z) * (𝟙_x : X → ℝ) z * (𝟙_y : X → ℝ) z = 0 := by
-  have : (𝟙_y : X → ℝ) x = 0 := by grind
+    ∑ z, ↑(G.c z) * (𝟙_x) z * (𝟙_y) z = 0 := by
+  have : (𝟙_y) x = 0 := by grind
   rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp), this, mul_zero, add_zero,
     ← Finset.sum_const_zero (s := (_ : Finset X))]
   congr! with y h
@@ -302,9 +308,9 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   rw [mul_add]
   congr
   rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
-  have : ∑ x_1, ↑((G.b x x_1) : ℝ) * (1 - (𝟙_x : X → ℝ) x_1) ^ 2 = ∑ x_1, ↑(G.b x x_1 : ℝ) := by
-    nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+  have : ∑ x_1, ↑((G.b x x_1) : ℝ) * (1 - (𝟙_x) x_1) ^ 2 = ∑ x_1, ↑(G.b x x_1 : ℝ) := by
     rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+    nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
     congr
     · ext y
       by_cases h : y = x <;> simp_all
@@ -330,40 +336,39 @@ example (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
   rw [neq_basis_vecs_imp_sum_weighted_killingTerm_eq_zero (h := h), mul_zero, add_zero,
     Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
   nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := y) (by simp)]
-  have : ↑(G.b x y) * ((𝟙_x : X → ℝ) x - (𝟙_x : X → ℝ) y) * ((𝟙_y : X → ℝ) x - (𝟙_y : X → ℝ) y)
+  have : ↑(G.b x y) * ((𝟙_x) x - (𝟙_x) y) * ((𝟙_y) x - (𝟙_y) y)
     = - ↑(G.b x y) := by grind
   rw [this]
-  have : ∑ x_1 ∈ univ \ {y}, ↑(G.b x x_1) * ((𝟙_x : X → ℝ) x - (𝟙_x : X → ℝ) x_1) * ((𝟙_y : X → ℝ) x - (𝟙_y : X → ℝ) x_1) = 0 := by
+  have : ∑ x_1 ∈ univ \ {y}, ↑(G.b x x_1) * ((𝟙_x) x - (𝟙_x) x_1) * ((𝟙_y) x - (𝟙_y) x_1) = 0 := by
     rw [← Finset.sum_const_zero]
     congr! with z h2
     grind
   rw [this, zero_add]
-  have : ∑ x_1 ∈ univ \ {x}, ∑ x_2, ↑(G.b x_1 x_2) * ((𝟙_x : X → ℝ) x_1 - (𝟙_x : X → ℝ) x_2) *
-    ((𝟙_y : X → ℝ) x_1 - (𝟙_y : X → ℝ) x_2)
+  have : ∑ x_1 ∈ univ \ {x}, ∑ x_2, ↑(G.b x_1 x_2) * ((𝟙_x) x_1 - (𝟙_x) x_2) *
+    ((𝟙_y) x_1 - (𝟙_y) x_2)
    = ∑ x_1 ∈ univ \ {x},
-    ((∑ x_2 ∈ univ \ {x}, ↑(G.b x_1 x_2) * ((𝟙_x : X → ℝ) x_1 - (𝟙_x : X → ℝ) x_2) * ((𝟙_y : X → ℝ) x_1 - (𝟙_y : X → ℝ) x_2)) +
-      ↑(G.b x_1 x) * ((𝟙_x : X → ℝ) x_1 - (𝟙_x : X → ℝ) x) * ((𝟙_y : X → ℝ) x_1 - (𝟙_y : X → ℝ) x)) := by
-    congr
-    ext z
+    ((∑ x_2 ∈ univ \ {x}, ↑(G.b x_1 x_2) * ((𝟙_x) x_1 - (𝟙_x) x_2) * ((𝟙_y) x_1 - (𝟙_y) x_2)) +
+      ↑(G.b x_1 x) * ((𝟙_x) x_1 - (𝟙_x) x) * ((𝟙_y) x_1 - (𝟙_y) x)) := by
+    congr with z
     simp
   rw [this, Finset.sum_add_distrib]
-  have : ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, ↑(G.b x_1 x_2) * ((𝟙_x : X → ℝ) x_1 -
-    (𝟙_x : X → ℝ) x_2) * ((𝟙_y : X → ℝ) x_1 - (𝟙_y : X → ℝ) x_2)
+  have : ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, ↑(G.b x_1 x_2) * ((𝟙_x) x_1 -
+    (𝟙_x) x_2) * ((𝟙_y) x_1 - (𝟙_y) x_2)
       = 0 := by
-    suffices ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, ↑(G.b x_1 x_2) * ((𝟙_x : X → ℝ) x_1 -
-    (𝟙_x : X → ℝ) x_2) * ((𝟙_y : X → ℝ) x_1 - (𝟙_y : X → ℝ) x_2) = ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, 0 by
+    suffices ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, ↑(G.b x_1 x_2) * ((𝟙_x) x_1 -
+    (𝟙_x) x_2) * ((𝟙_y) x_1 - (𝟙_y) x_2) = ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, 0 by
       simp only [Finset.sum_const_zero] at this
       exact this
     congr! with z h2
     grind
   rw [this, zero_add, Finset.sum_eq_sum_diff_singleton_add (i := y) (by grind)]
-  have : ↑(G.b y x) * ((𝟙_x : X → ℝ) y - (𝟙_x : X → ℝ) x) * ((𝟙_y : X → ℝ) y - (𝟙_y : X → ℝ) x)
+  have : ↑(G.b y x) * ((𝟙_x) y - (𝟙_x) x) * ((𝟙_y) y - (𝟙_y) x)
     = - ↑(G.b y x) := by grind
   rw [this]
-  have : ∑ x_1 ∈ (univ \ {x}) \ {y}, ↑(G.b x_1 x) * ((𝟙_x : X → ℝ) x_1 -
-      (𝟙_x : X → ℝ) x) * ((𝟙_y : X → ℝ) x_1 - (𝟙_y : X → ℝ) x) = 0 := by
-    suffices ∑ x_1 ∈ (univ \ {x}) \ {y}, ↑(G.b x_1 x) * ((𝟙_x : X → ℝ) x_1 -
-      (𝟙_x : X → ℝ) x) * ((𝟙_y : X → ℝ) x_1 - (𝟙_y : X → ℝ) x) = ∑ x_1 ∈ (univ \ {x}) \ {y}, 0 by
+  have : ∑ x_1 ∈ (univ \ {x}) \ {y}, ↑(G.b x_1 x) * ((𝟙_x) x_1 -
+      (𝟙_x) x) * ((𝟙_y) x_1 - (𝟙_y) x) = 0 := by
+    suffices ∑ x_1 ∈ (univ \ {x}) \ {y}, ↑(G.b x_1 x) * ((𝟙_x) x_1 -
+      (𝟙_x) x) * ((𝟙_y) x_1 - (𝟙_y) x) = ∑ x_1 ∈ (univ \ {x}) \ {y}, 0 by
       simp only [Finset.sum_const_zero] at this
       exact this
     congr! with z h2
@@ -373,7 +378,7 @@ example (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
 
 -- Furthermore
 lemma associatedForm_at_basisVec_eq_killingTerm : G.Q_bc (𝟙_x) 1 = G.c x := by
-  have : ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x : X → ℝ) x_1 = 0 := by
+  have : ∑ x_1 ∈ univ \ {x}, ↑(G.c x_1) * (𝟙_x) x_1 = 0 := by
     rw [← Finset.sum_const_zero]; congr! with z h2; grind
   simp
   grind [Finset.sum_eq_sum_diff_singleton_add]
@@ -389,7 +394,7 @@ lemma associatedForm_isSymm : G.Q_bc.IsSymm := by
 
 -- Now we define a predicate for Dirichlet forms
 structure DirichletProp (Q : (X → ℝ) →ₗ[ℝ] (X → ℝ) →ₗ[ℝ] ℝ) : Prop where
-  protected eq : (∀ (f g : X → ℝ), (∀ (x y : X), |f x - f y| ≤ |g x - g y|)
+  protected eq : (∀ (f g), (∀ (x y : X), |f x - f y| ≤ |g x - g y|)
     → (∀ (x : X), (|f x| ≤ |g x|)) -- is this really what they meant?
     → Q f f ≤ Q g g)
 
