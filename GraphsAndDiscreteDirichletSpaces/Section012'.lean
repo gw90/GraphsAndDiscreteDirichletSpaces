@@ -461,4 +461,16 @@ lemma Laplacian_max_principle
   have := h4 h3
   nlinarith
 
+-- Definition 0.7 (Matrix associated to a graph)
+noncomputable
+def l_bc : Matrix X X ℝ := fun x y ↦
+  if x = y then ∑ z : X, G.b x z + G.c x
+  else - G.b x y
+
+noncomputable
+def l_bc' : Matrix X X ℝ := l_Bilin G.Q_bc
+
+-- This should definitiely be true, right?
+example : G.l_bc = G.l_bc' := by sorry
+
 end GraphOver
