@@ -173,43 +173,33 @@ example (h : l.IsSymm) :
   simp only [stdBasis, Pi.basisFun_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, map_sum,
     map_smul, Finsupp.coe_finset_sum, Finsupp.coe_smul, this]
   rw [Finset.sum_comm]
-  congr
-  ext y
+  congr with y
   simp only [Pi.single_apply, mul_ite, mul_one, mul_zero, Finset.sum_ite_eq, Finset.mem_univ,
     ↓reduceIte, Matrix.mulVec_eq_sum, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, op_smul_eq_smul,
-    Matrix.transpose_apply] -- the next line cannot be merge into this for some reaon
-  simp only [mul_comm]
-  rw [← Finset.mul_sum]
-  congr
-  ext x
+    Matrix.transpose_apply] -- the next line cannot be merged into this for some reaon
+  simp only [mul_comm, ← Finset.mul_sum]
+  congr with x
   rw [Matrix.IsSymm.apply h y x]
 
 example (h : l.IsSymm) :
     ∑ (y : X), ((L_Mat l) f) y * g y = ∑ (x : X), f x * (L_Mat l g) x:= by
-  unfold L_Mat
-  unfold opInducedByMatrix
-  unfold stdBasis
-  simp only [toMatrix_eq_toMatrix', toMatrix'_symm, Matrix.toLin'_apply]
-  have : f = stdBasis.equivFun.symm f := by rfl
+  simp only [L_Mat, opInducedByMatrix, stdBasis, toMatrix_eq_toMatrix', toMatrix'_symm,
+    Matrix.toLin'_apply]
+  have : f = stdBasis.equivFun.symm f := rfl
   rw [this, Module.Basis.equivFun_symm_apply stdBasis f]
-  have : g = stdBasis.equivFun.symm g := by rfl
+  have : g = stdBasis.equivFun.symm g := rfl
   rw [this, Module.Basis.equivFun_symm_apply stdBasis g]
-  unfold stdBasis
-  simp only [Pi.basisFun_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-  simp only [Matrix.mulVec_eq_sum, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Finset.op_sum,
+  simp only [stdBasis, Pi.basisFun_apply, Finset.sum_apply, Pi.smul_apply, smul_eq_mul,
+    Matrix.mulVec_eq_sum, Finset.sum_apply, Pi.smul_apply, smul_eq_mul, Finset.op_sum,
     MulOpposite.op_mul, Matrix.transpose_apply, MulOpposite.smul_eq_mul_unop, Finset.unop_sum,
-    MulOpposite.unop_mul, MulOpposite.unop_op]
-  simp only [Finset.mul_sum]
+    MulOpposite.unop_mul, MulOpposite.unop_op, Finset.mul_sum]
   nth_rw 2 [Finset.sum_comm]
   rw [Finset.sum_comm_cycle]
   nth_rw 1 [Finset.sum_comm]
-  congr
-  ext a
-  congr
-  ext b
+  congr with a
+  congr with b
   simp only [mul_comm, Finset.mul_sum]
-  congr
-  ext y
+  congr with y
   rw [Matrix.IsSymm.apply h b y]
   ring_nf
 
