@@ -298,7 +298,8 @@ lemma neq_basis_vecs_imp_sum_weighted_killingTerm_eq_zero (x y : X) (h : x ≠ y
   grind
 
 -- We note by direct calculation that
-example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
+@[simp]
+lemma Q_bc_x_x_eq_deg : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   simp only [Q_bc, deg, associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add,
     NNReal.coe_sum]
   field_simp
@@ -328,7 +329,8 @@ example : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   grind
 
 -- And
-example (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
+@[simp]
+lemma x_neq_y_imp_Q_bc_eq_neg_b (x y : X) (h : x ≠ y) : G.Q_bc (𝟙_x) (𝟙_y) = - G.b x y := by
   simp only [associatedForm_apply, associatedFormFun, one_div]
   field_simp
   rw [neq_basis_vecs_imp_sum_weighted_killingTerm_eq_zero (h := h), mul_zero, add_zero,
@@ -470,7 +472,19 @@ def l_bc : Matrix X X ℝ := fun x y ↦
 noncomputable
 def l_bc' : Matrix X X ℝ := l_Bilin G.Q_bc
 
--- This should definitiely be true, right?
-example : G.l_bc = G.l_bc' := by sorry
+example : G.l_bc = G.l_bc' := by
+  ext x y
+  unfold l_bc'
+  unfold l_Bilin
+  unfold matrixAssociatedToForm
+  rw [BilinForm.toMatrix'_apply]
+  by_cases h : x ≠ y
+  · simp [G.x_neq_y_imp_Q_bc_eq_neg_b x y h, l_bc, h]
+  push Not at h
+  rw [h]
+  unfold l_bc
+  simp only [↓reduceIte]
+  rw [Q_bc_x_x_eq_deg]
+  rfl
 
 end GraphOver
