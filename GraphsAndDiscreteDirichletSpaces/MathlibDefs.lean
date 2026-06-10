@@ -51,8 +51,13 @@ lemma standardWeights_edgeWeight_neq_one_iff_eq_zero (h : StandardWeights G) :
 -- include way to produce graph with standardweights from simpleGraph
 
 -- Example 0.2 (Graphs with standard weights)
-lemma standardWeightEdgeSet (h : StandardWeights G) :
+lemma standardWeightEdgeSet_in (h : StandardWeights G) :
     s(v, w) ∈ G.edgeSet ↔ G.edgeWeight v w = 1 := (G.mem_edgeSet).trans h.edgeWeight_Adj_iff
+
+
+lemma standardWeightEdgeSet_notin (h : StandardWeights G) :
+    s(v, w) ∉ G.edgeSet ↔ G.edgeWeight v w = 0 := by
+  grind [h.edgeWeight_NotAdj_iff, G.mem_edgeSet]
 
 variable [Fintype X]
 
@@ -72,17 +77,23 @@ lemma degreeWithStandardWeights (h : StandardWeights G) (x : X) :
   · grind [standardWeights_edgeWeight_neq_zero_iff_eq_one]
   exact h.edgeWeight_Adj_iff.mp ((G.toSimpleGraph.mem_neighborFinset x y).mp hy)
 
+lemma degreeWithStandardWeightsCard (h : StandardWeights G) (x : X) :
+    G.degree x = (G.neighborFinset x).card := by
+  rw [degreeWithStandardWeights G h x]
+  simp
+
+namespace WeightedGraphWithKillingTerm
 
 -- Definiton 0.5
 @[simp]
 noncomputable
-def WeightedGraphWithKillingTerm.associatedFormFun (f g : X → ℝ) :=
+def associatedFormFun (f g : X → ℝ) :=
   (1/2) * ∑ x, ∑ y, (G.edgeWeight x y) * (f x - f y) * (g x - g y) +
     ∑ x, (G.killingTerm x) * f x * g x
 
 open Finset
 
-instance WeightedGraphWithKillingTerm.associatedFormBilinearMap :
+instance associatedFormBilinearMap :
     IsBilinearMap (R := ℝ) G.associatedFormFun where
   add_left f g h := by
     apply sub_eq_zero.mp
@@ -91,7 +102,7 @@ instance WeightedGraphWithKillingTerm.associatedFormBilinearMap :
     simp [sum_add_distrib]
     ring
   smul_left c f g := by
-    unfold WeightedGraphWithKillingTerm.associatedFormFun
+    unfold associatedFormFun
     field_simp
     ring_nf
     simp [sum_add_distrib]
@@ -105,7 +116,7 @@ instance WeightedGraphWithKillingTerm.associatedFormBilinearMap :
     simp [sum_add_distrib]
     ring
   smul_right c f g := by
-    unfold WeightedGraphWithKillingTerm.associatedFormFun
+    unfold associatedFormFun
     ring_nf
     simp [sum_add_distrib]
     ring_nf
@@ -115,8 +126,124 @@ instance WeightedGraphWithKillingTerm.associatedFormBilinearMap :
     ring_nf
 
 noncomputable
-def WeightedGraphWithKillingTerm.associatedForm := G.associatedFormBilinearMap.toLinearMap
+def associatedForm := G.associatedFormBilinearMap.toLinearMap
 
-lemma WeightedGraphWithKillingTerm.associatedForm_apply {f g} : G.associatedForm f g =
+lemma associatedForm_apply {f g} : G.associatedForm f g =
   (1/2) * ∑ x, ∑ y, (G.edgeWeight x y) * (f x - f y) * (g x - g y) +
     ∑ x, (G.killingTerm x) * f x * g x := by rfl
+
+noncomputable
+instance : DecidableEq X := by exact Classical.typeDecidableEq X
+
+noncomputable
+abbrev basisFun (y : X) : X → ℝ := Pi.single y 1
+
+scoped notation "𝟙_" y:max => basisFun y
+
+@[simp]
+lemma sum_killingTerm_weight_mul_basisFun_sq_eq_killingTerm_mul_basisFun_sq :
+    ∑ i, ↑(G.killingTerm i) * (𝟙_x) i ^ 2 = ↑(G.killingTerm x) * (𝟙_x) x ^ 2 := by
+  simp [(Fintype.sum_subset (f := fun (y : X) ↦ G.killingTerm y * (𝟙_x) y ^ 2)
+      (s := {x}) (by grind)).symm]
+
+@[simp]
+lemma associatedForm_of_basis_eq_degree :
+    G.associatedForm (𝟙_x) (𝟙_x) = G.degree x := by
+  simp only [associatedForm_apply, degree, one_div, NNReal.coe_add, NNReal.coe_sum]
+  field_simp
+  simp only [sum_killingTerm_weight_mul_basisFun_sq_eq_killingTerm_mul_basisFun_sq,
+    Pi.single_eq_same, one_pow, mul_one]
+  rw [mul_add]
+  congr
+  rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+  have : ∑ x_1, ↑((G.edgeWeight x x_1) : ℝ) * (1 - (𝟙_x) x_1) ^ 2
+      = ∑ x_1, ↑(G.edgeWeight x x_1 : ℝ) := by
+    rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+    nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+    congr
+    · ext y
+      by_cases h : y = x <;> simp_all
+    simp_all
+  simp only [Pi.single_eq_same, this, two_mul]
+  congr 1
+  nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+  simp only [G.no_loop, coe_zero, add_zero]
+  congr! with y h
+  have : y ≠ x := by grind
+  rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+  simp only [ne_eq, this, not_false_eq_true, Pi.single_eq_of_ne, zero_sub, even_two, Even.neg_pow,
+    Pi.single_eq_same, one_pow, mul_one, G.edgeWeight_symm_apply]
+  apply add_eq_right.mpr
+  rw [← Finset.sum_const_zero]
+  congr! with z h'
+  grind
+
+@[simp]
+lemma neq_basis_vecs_imp_sum_weighted_killingTerm_neq_basisFun_eq_zero (x y : X) (h : x ≠ y) :
+    ∑ z, ↑(G.killingTerm z) * (𝟙_x) z * (𝟙_y) z = 0 := by
+  have : (𝟙_y) x = 0 := by grind
+  rw [Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp), this, mul_zero, add_zero,
+    ← Finset.sum_const_zero (s := (_ : Finset X))]
+  congr! with y h
+  grind
+
+@[simp]
+lemma associatedForm_neq_basisFuns_eq_neq_edgeWeight (x y : X) (h : x ≠ y) :
+    G.associatedForm (𝟙_x) (𝟙_y) = - G.edgeWeight x y := by
+  simp only [associatedForm_apply, one_div]
+  field_simp
+  rw [neq_basis_vecs_imp_sum_weighted_killingTerm_neq_basisFun_eq_zero (h := h), mul_zero, add_zero,
+    Finset.sum_eq_sum_diff_singleton_add (i := x) (by simp)]
+  nth_rw 2 [Finset.sum_eq_sum_diff_singleton_add (i := y) (by simp)]
+  have one_y_eq_0 : (𝟙_y) x = 0 := by grind
+  conv => lhs; congr; rfl; arg 2; simp [h]
+  have : ∑ x_1 ∈ univ \ {y}, ↑(G.edgeWeight x x_1)
+      * ((𝟙_x) x - (𝟙_x) x_1) * ((𝟙_y) x - (𝟙_y) x_1) = 0 := by
+    rw [← Finset.sum_const_zero]
+    congr! with z h2
+    grind
+  rw [this, zero_add]
+  have : ∑ x_1 ∈ univ \ {x}, ∑ x_2, ↑(G.edgeWeight x_1 x_2) * ((𝟙_x) x_1 - (𝟙_x) x_2) *
+    ((𝟙_y) x_1 - (𝟙_y) x_2)
+   = ∑ x_1 ∈ univ \ {x}, ((∑ x_2 ∈ univ \ {x},
+      ↑(G.edgeWeight x_1 x_2) * ((𝟙_x) x_1 - (𝟙_x) x_2) * ((𝟙_y) x_1 - (𝟙_y) x_2)) +
+      ↑(G.edgeWeight x_1 x) * ((𝟙_x) x_1 - (𝟙_x) x) * ((𝟙_y) x_1 - (𝟙_y) x)) := by
+    congr with z
+    simp
+  rw [this, Finset.sum_add_distrib]
+  have : ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, ↑(G.edgeWeight x_1 x_2) * ((𝟙_x) x_1 -
+    (𝟙_x) x_2) * ((𝟙_y) x_1 - (𝟙_y) x_2)
+      = 0 := by
+    suffices ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, ↑(G.edgeWeight x_1 x_2) * ((𝟙_x) x_1 -
+    (𝟙_x) x_2) * ((𝟙_y) x_1 - (𝟙_y) x_2) = ∑ x_1 ∈ univ \ {x}, ∑ x_2 ∈ univ \ {x}, 0 by
+      simp only [Finset.sum_const_zero] at this
+      exact this
+    congr! with z h2
+    grind
+  rw [this, zero_add, Finset.sum_eq_sum_diff_singleton_add (i := y) (by grind)]
+  have : ↑(G.edgeWeight y x) * ((𝟙_x) y - (𝟙_x) x) * ((𝟙_y) y - (𝟙_y) x)
+    = - ↑(G.edgeWeight y x) := by grind
+  rw [this]
+  have : ∑ x_1 ∈ (univ \ {x}) \ {y}, ↑(G.edgeWeight x_1 x) * ((𝟙_x) x_1 -
+      (𝟙_x) x) * ((𝟙_y) x_1 - (𝟙_y) x) = 0 := by
+    suffices ∑ x_1 ∈ (univ \ {x}) \ {y}, ↑(G.edgeWeight x_1 x) * ((𝟙_x) x_1 -
+      (𝟙_x) x) * ((𝟙_y) x_1 - (𝟙_y) x) = ∑ x_1 ∈ (univ \ {x}) \ {y}, 0 by
+      simp only [Finset.sum_const_zero] at this
+      exact this
+    congr! with z h2
+    grind
+  rw [this, G.edgeWeight_symm_apply]
+  ring
+
+lemma associatedForm_at_basisVec_eq_killingTerm : G.associatedForm (𝟙_x) 1 = G.killingTerm x := by
+  have : ∑ x_1 ∈ univ \ {x}, ↑(G.killingTerm x_1) * (𝟙_x) x_1 = 0 := by
+    rw [← Finset.sum_const_zero]; congr! with z h2; grind
+  simp [associatedForm_apply]
+  grind [Finset.sum_eq_sum_diff_singleton_add]
+
+lemma associatedForm_isSymm : G.associatedForm.IsSymm := by
+  simp only [LinearMap.isSymm_def, associatedForm_apply, one_div, Real.ringHom_apply]
+  intro f g
+  congr 1 <;> grind
+
+end WeightedGraphWithKillingTerm
