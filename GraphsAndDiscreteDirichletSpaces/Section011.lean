@@ -7,7 +7,9 @@ open NNReal
 structure GraphOver (X : Type*) extends SimpleGraph X where
   edgeWeight : X → X → ℝ≥0
   edgeWeight_symm : IsSymmOp edgeWeight
-  edgeDef (u v : X) : Adj u v ↔ 0 < edgeWeight u v
+  /- the property below is why we don't use existing EdgeLabeling API.
+  We want non-adjacent vertices to have an edge weight of 0-/
+  edgeDef (u v : X) : Adj u v ↔ 0 < edgeWeight u v -- make a lemma for the contrapositive of this
   killingTerm : X → ℝ≥0
 
 set_option linter.unusedFintypeInType false

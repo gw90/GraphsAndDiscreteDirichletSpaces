@@ -150,7 +150,7 @@ example : (Q_Mat l) f g = ∑ (x : X), ∑ (y : X), (l x y) * f x * g y := by
 
 open scoped Matrix
 
-example (h : l.IsSymm) :
+lemma GreensFormula_basic_left (h : l.IsSymm) :
     ∑ (x : X), ∑ (y : X), (l x y) * f x * g y
     = ∑ (y : X), ((L_Mat l) f) y * g y := by
   simp only [L_Mat, opInducedByMatrix, toMatrix_symm, stdBasis, Matrix.toLin_apply,
@@ -170,7 +170,7 @@ example (h : l.IsSymm) :
   congr with x
   rw [Matrix.IsSymm.apply h y x]
 
-example (h : l.IsSymm) :
+lemma GreensFormula_basic_right (h : l.IsSymm) :
     ∑ (y : X), ((L_Mat l) f) y * g y = ∑ (x : X), f x * (L_Mat l g) x:= by
   simp only [L_Mat, opInducedByMatrix, stdBasis, toMatrix_eq_toMatrix', toMatrix'_symm,
     Matrix.toLin'_apply]
@@ -480,5 +480,19 @@ lemma l_bc'_isSymm : G.l_bc'.IsSymm := by
 lemma l_bc_isSymm : G.l_bc.IsSymm := by rw [l_equiv]; exact l_bc'_isSymm G
 
 -- It appears that Green's formula is a variant of the 4-part equation proven above?
+lemma GreensFormula_left (f g : X → ℝ) :
+    G.Q_bc f g = ∑ x : X, ((L_bc G) f) x * g x := by
+  have := GreensFormula_basic_left (X := X)
+  -- change into matrix-induced version? Or refactor the other version to use this?
+  simp only [Q_bc, L_bc, associatedForm_apply, associatedFormFun, Laplacian]
+  field_simp
+  rw [Finset.mul_sum, Finset.mul_sum]
+  rw [← Finset.sum_add_distrib]
+  congr with x
+  field_simp
+  -- I don't see where this proof is going.
+  sorry
+
+-- Once I'm done with Green's formula, begin developing a Mathlib PR
 
 end GraphOver
