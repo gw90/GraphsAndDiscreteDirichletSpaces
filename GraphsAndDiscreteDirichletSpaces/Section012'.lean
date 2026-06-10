@@ -60,19 +60,6 @@ lemma opDef (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) (f : X → ℝ) :
   rw [mul_comm]
   congr
 
--- can I get this notion of symmetry out of Mathlib somehow?
--- I don't want to have to define an inner product
--- L is a symmetric operator when l is a symmetric matrix
-/-We say that L is an operator on C (X) with symmetric matrix if l is symmetric
-or call L a symmetric operator in this case.-/
-def IsSymmOp (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) := (l_Op L).IsSymm
-
--- maybe use IsSymmOp from Mathlib.Logic.OpClass?
-
--- WTS: self adjoint iff induced matrix is symmetric
-
--- remember to really prove every little statement
-
 -- Forms
 
 open LinearMap
@@ -491,5 +478,7 @@ lemma l_bc'_isSymm : G.l_bc'.IsSymm := by
   simp [associatedForm_isSymm]
 
 lemma l_bc_isSymm : G.l_bc.IsSymm := by rw [l_equiv]; exact l_bc'_isSymm G
+
+-- It appears that Green's formula is a variant of the 4-part equation proven above?
 
 end GraphOver
