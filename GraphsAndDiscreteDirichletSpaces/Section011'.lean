@@ -71,8 +71,7 @@ lemma degreeWithStandardWeights (h : StandardWeights G) (x : X) :
     congr!
     simp_all
   rw [this]
-  congr
-  ext a
+  congr with a
   constructor
   · intro h
     simp only [ne_eq, Finset.mem_filter, Finset.mem_univ, true_and] at h

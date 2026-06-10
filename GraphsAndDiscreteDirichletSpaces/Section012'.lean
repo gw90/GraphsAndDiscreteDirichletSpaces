@@ -131,7 +131,8 @@ In particular, Q is symmetric if and only if the associated matrix l is symmetri
 -- Upstreamed to Mathlib as
 --#check LinearMap.BilinForm.isSymm_toMatrix_iff_isSymm
 
-example (Q : LinearMap.BilinForm ℝ (X → ℝ)) : Q.IsSymm ↔ (l_Bilin Q).IsSymm := by
+lemma Bilin_isSymm_iff_assocMat_isSymm (Q : LinearMap.BilinForm ℝ (X → ℝ)) :
+    Q.IsSymm ↔ (l_Bilin Q).IsSymm := by
   rw [LinearMap.BilinForm.isSymm_iff, LinearMap.isSymm_def, Matrix.IsSymm.ext_iff]
   simp only [l_Bilin, matrixAssociatedToForm, Real.ringHom_apply, BilinForm.toMatrix'_apply]
   constructor
@@ -472,7 +473,7 @@ def l_bc : Matrix X X ℝ := fun x y ↦
 noncomputable
 def l_bc' : Matrix X X ℝ := l_Bilin G.Q_bc
 
-example : G.l_bc = G.l_bc' := by
+lemma l_equiv : G.l_bc = G.l_bc' := by
   ext x y
   dsimp [l_bc', l_Bilin, matrixAssociatedToForm]
   rw [BilinForm.toMatrix'_apply]
@@ -483,5 +484,12 @@ example : G.l_bc = G.l_bc' := by
   simp only [l_bc, ↓reduceIte]
   rw [Q_bc_x_x_eq_deg]
   rfl
+
+lemma l_bc'_isSymm : G.l_bc'.IsSymm := by
+  apply (Bilin_isSymm_iff_assocMat_isSymm G.Q_bc).mp
+  rw [LinearMap.BilinForm.isSymm_iff]
+  simp [associatedForm_isSymm]
+
+lemma l_bc_isSymm : G.l_bc.IsSymm := by rw [l_equiv]; exact l_bc'_isSymm G
 
 end GraphOver
