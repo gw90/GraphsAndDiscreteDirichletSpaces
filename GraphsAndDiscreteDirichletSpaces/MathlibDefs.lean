@@ -39,7 +39,7 @@ lemma standardWeights_edgeWeight_neq_one_iff_eq_zero (h : StandardWeights G) :
   contrapose
   exact h.edgeWeight_Adj_iff.symm
 
--- include lemmas about standardweights
+-- include way to produce graph with standardweights from simpleGraph
 
 -- Example 0.2 (Graphs with standard weights)
 lemma standardWeightEdgeSet (h : StandardWeights G) :
@@ -51,10 +51,7 @@ def WeightedGraph.degree (x : X) : ℝ≥0 :=
   ∑ y, (G.edgeWeight x y) + (G.killingTerm x)
 
 noncomputable
-instance : DecidableRel G.Adj := by exact Classical.decRel G.Adj
-
-noncomputable
-instance : Fintype ↑(G.neighborSet x) := by exact Fintype.ofFinite ↑(G.neighborSet x)
+instance : Fintype ↑(G.neighborSet x) := Fintype.ofFinite (G.neighborSet x)
 
 lemma degreeWithStandardWeights (h : StandardWeights G) (x : X) :
     G.degree x = G.toSimpleGraph.degree x := by

@@ -5,7 +5,7 @@ open NNReal
 set_option linter.unusedFintypeInType false
 namespace GraphOver
 
-variable {X : Type*} (G : GraphOver X) (x : X) [Fintype X]
+variable {X : Type*} (x : X) [Fintype X]
 
 -- Section 0.1.2
 --variable [TopologicalSpace X] [DiscreteTopology X]
@@ -208,6 +208,8 @@ abbrev Q_Op (L : (X → ℝ) →ₗ[ℝ] (X → ℝ)) := (L.toMatrix stdBasis st
 #check L_Bilin
 #check Q_Op
 #check Q_Mat
+
+variable (G : GraphOver X)
 
 -- Definiton 0.5
 @[simp]
