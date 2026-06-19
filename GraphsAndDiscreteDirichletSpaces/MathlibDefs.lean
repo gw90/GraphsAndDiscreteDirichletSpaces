@@ -1,4 +1,6 @@
-import Mathlib
+import Mathlib.Analysis.InnerProductSpace.Basic
+import Mathlib.Combinatorics.SimpleGraph.Finite
+import Mathlib.Data.Real.Hom
 
 open NNReal
 

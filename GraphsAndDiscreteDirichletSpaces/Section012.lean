@@ -116,7 +116,7 @@ example (x : X) :
 In particular, Q is symmetric if and only if the associated matrix l is symmetric.
 -/
 -- Upstreamed to Mathlib as
---#check LinearMap.BilinForm.isSymm_toMatrix_iff_isSymm
+#check LinearMap.BilinForm.isSymm_toMatrix_iff_isSymm
 
 lemma Bilin_isSymm_iff_assocMat_isSymm (Q : LinearMap.BilinForm ℝ (X → ℝ)) :
     Q.IsSymm ↔ (l_Bilin Q).IsSymm := by
@@ -288,6 +288,7 @@ lemma neq_basis_vecs_imp_sum_weighted_killingTerm_eq_zero (x y : X) (h : x ≠ y
   grind
 
 -- We note by direct calculation that
+-- see if there are any generalizations of the below theorems for arbitrary bases
 @[simp]
 lemma Q_bc_x_x_eq_deg : G.Q_bc (𝟙_x) (𝟙_x) = G.deg x := by
   simp only [Q_bc, deg, associatedForm_apply, associatedFormFun, one_div, NNReal.coe_add,
